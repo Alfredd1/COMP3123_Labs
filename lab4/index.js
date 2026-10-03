@@ -1,100 +1,34 @@
-/*
-Purpose: 
-- Serve multiple paths from an Express server using routes
-- Serve a static html file
-- Extract GET params(compare with GET query)
-*/
+const express = require("express");
+const app = express();
 
-const express = require("express")
-const path = require("path")
-const app = express()
+app.use(express.json());
 
-const SERVER_PORT = process.env.PORT || 3000
-const publicDir = path.join(__dirname, "public")
+// ✅ Serve static files in /public (instruction.html will be at /instruction.html)
+app.use(express.static("public"));
 
-// -------------SET UP MIDDLEWARE FOR EXPRESS
-// Serve static files
-// The URL of the webpage can be accessed through localhost:3000/static
-app.use("/static", express.static(publicDir))
-app.use(express.static(publicDir))
+// GET /hello
+app.get("/hello", (req, res) => {
+  res.type("text/plain").send("Hello Express JS");
+});
 
+// GET /user?firstname=&lastname=
+app.get("/user", (req, res) => {
+  const firstname = req.query.firstname || "Pritesh";
+  const lastname = req.query.lastname || "Patel";
+  res.json({ firstname, lastname });
+});
 
-// Serve JSON
-app.use(express.json())
+// POST /user/:firstname/:lastname
+app.post("/user/:firstname/:lastname", (req, res) => {
+  const { firstname, lastname } = req.params;
+  res.json({ firstname, lastname });
+});
 
-// Read URL params or queries 
-app.use(express.urlencoded({extended: true}))
+// POST /users  (expects an array of { firstname, lastname })
+app.post("/users", (req, res) => {
+  const users = Array.isArray(req.body) ? req.body : [];
+  res.json(users);
+});
 
-app.get("/", (request, response) => {
-    response.send("<h1>Welcome to the root of the server - using GET method</h1>")
-})
-
-app.get("/hello", (request, response) => {
-    response.status(200).send("<h1>Welcome to the /hello path on the server </h1>")
-})
-
-app.get("/college", (request, response) => {
-    const college = {
-        name: "George Brown Polytechnic",
-        location: "Toronto",
-        established: 1967
-    }
-    
-    response.json(college)
-})
-
-app.get("/students", (request, response) => {
-    if(!request.query.name || !request.query) {  
-    return response.status(400).json({
-        error: "Missing query parameters"
-    })
-    }
-    console.log(request.query)
-
-    const name = request.query.name
-    const age = request.query.age
-    response.json({
-        student_name: name,
-        student_age: age
-    })
-})
-
-app.get("/students/:name/:age", (request, response) => {
-    console.log(request.params)
-    
-    if(!request.params.name || !request.params.age) {
-        return response.status(400).json({
-            error: "Missing URL parameters"
-        })
-    }
-
-    const name = request.params.name
-    const age = request.params.age
-    response.json({
-        student_name: name,
-        student_age: age
-    })
-})
-
-
-app.post("/students", (request, response) => {
-    const student = request.body
-    console.log(student)
-    if(!request.student_name || !request.student_age) {
-        return response.status(400).json({
-            error: "Missing body parameters"
-        })
-    }
-
-    const name = request.body.name
-    const age = request.body.age
-    response.json({
-        student_name: name,
-        student_age: age
-    })
-
-})
-
-app.listen(SERVER_PORT, () => {
-    console.log("Server is running on http://localhost: " + SERVER_PORT)
-})
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
